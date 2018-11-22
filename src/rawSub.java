@@ -238,7 +238,7 @@ public class rawSub {
 				try {
 					for (int i = 0; i < fileNum; ++i) {
 						Files.copy(new File(folderPath + "/" + listOfFileNames[i]).toPath(),
-								(new File(outputFolderPath + "/" + finalFileName + recoverFilePartExtention(isAlphabetExtension,i,3))).toPath(),
+								(new File(outputFolderPath + "/" + finalFileName + recoverFilePartExtension(isAlphabetExtension,i,3))).toPath(),
 								StandardCopyOption.REPLACE_EXISTING);
 					}
 				} catch (IOException e) {
@@ -327,17 +327,16 @@ public class rawSub {
 	}
 	
 	public static String anEncode(String inpStr) {
+		if (inpStr == null || inpStr.isEmpty())
+			return "";
 		String tmpOut = "";
 		int[] inpAsciiCode = new int[inpStr.length()];
 		for (int i = 0; i < inpStr.length(); ++i) {
 			inpAsciiCode[i] = (int) inpStr.charAt(i);
 		}		
 		int[] maxAsciiCode = getMaxIntArr(inpAsciiCode);
-		if (maxAsciiCode[1] != -1) {
-			Double tmpDbl = Math.log10(maxAsciiCode[0])/Math.log10(anCodeSum);
-			if (tmpDbl % 1 != 0)
-				++tmpDbl;	
-			int unitLength = tmpDbl.intValue();
+		if (maxAsciiCode[1] != -1) {	
+			int unitLength = (int) (Math.log10(maxAsciiCode[0]>1?maxAsciiCode[0]:1)/Math.log10(anCodeSum)) + 1;
 			tmpOut += anNum2Char(unitLength);
 			int[] tmpChar;
 			for (int i = 0; i < inpAsciiCode.length; ++i) {
@@ -387,7 +386,7 @@ public class rawSub {
 		return -1;
 	}
 	
-	public static final String anNamingCode = " !#$%&'()+,-.0123456789;=@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{}~€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
+	public static final String anNamingCode = "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿŒŽƒŠABCDœžŸEFGHIJKLMNOPQRSTUVWXYZ š0123456789ª_º.—ˆ-¼½¾–¹²³abcdefghijklmnopqrstuvwxyz";
 	public static final int anNamingCodeSum = anNamingCode.length();
 	
 	public static String anGenFileName() {
@@ -412,9 +411,19 @@ public class rawSub {
 		return anNum2Char((anChar2Num(anChr) + (aNum % anCodeSum) + anCodeSum) % anCodeSum);
 	}
 	
-	public static String recoverFilePartExtention(boolean isAlphabetExtension, int partNum, int extLen) {
+	public static String recoverFilePartExtension(boolean isAlphabetExtension, int partNum, int extLen) {
 		if (isAlphabetExtension) {
-			return ".__" + (char) (partNum + (int) 'a');
+			int realNumSize = partNum >= 1?(int) (Math.log10(partNum)/Math.log10(26)) + 1:1;
+			int[] partNumInAlphaBase = posDec2Base(partNum,26,extLen);
+			String tmpOut = "";
+			for (int i = extLen - 1; i >= realNumSize; --i) {
+				tmpOut += "_";
+			}
+			tmpOut += (char) (partNumInAlphaBase[realNumSize-1]-(realNumSize>1?1:0) + (int) 'a');
+			for (int i = realNumSize - 2; i >= 0; --i) {
+				tmpOut += (char) (partNumInAlphaBase[i] + (int) 'a');
+			}
+			return "." + tmpOut;
 		} else {
 			String tmpOut = Integer.toString(partNum + 1);
 			for (int i = tmpOut.length(); i < extLen; ++i) {
